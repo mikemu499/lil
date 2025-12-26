@@ -2,10 +2,11 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build artifacts
 dist/
 build/
-*.js.map
+*.js
+*.css
 
 # Environment
 .env
@@ -19,11 +20,17 @@ build/
 # Logs
 *.log
 
-# Temporary files
-*.tmp
-*.swp
-
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
+
+# Python (if present)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
 ```
