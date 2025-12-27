@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Teachers.css';
 
@@ -11,6 +11,32 @@ const Teachers = () => {
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [user, setUser] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [editingStudentId, setEditingStudentId] = useState(null);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [activeTab, setActiveTab] = useState('students'); // students, tasks
+  const [showTaskGiveModal, setShowTaskGiveModal] = useState(false);
+  const [selectedTaskForGive, setSelectedTaskForGive] = useState(null);
+  const [selectedStudentForTask, setSelectedStudentForTask] = useState('');
+  const [showClassTasksEditor, setShowClassTasksEditor] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
+  const [selectedStudentForReport, setSelectedStudentForReport] = useState('');
+  const [reportFromDate, setReportFromDate] = useState('');
+  const [reportToDate, setReportToDate] = useState('');
+  const [showStudentManager, setShowStudentManager] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [avatarType, setAvatarType] = useState('emoji');
+  const [avatarEmoji, setAvatarEmoji] = useState('🦄');
+  const [avatarColor, setAvatarColor] = useState('#fff2fb');
+  const [selectedGender, setSelectedGender] = useState('other');
+  const [doorTheme, setDoorTheme] = useState('#ffd1f0');
+  const [previewAvatar, setPreviewAvatar] = useState('');
+  const [filePreview, setFilePreview] = useState('');
+  const [file, setFile] = useState(null);
+
+  // Refs
+  const fileInputRef = useRef(null);
 
   // Mock user data for now
   useEffect(() => {
@@ -21,27 +47,271 @@ const Teachers = () => {
     });
   }, []);
 
+  // Load class list from localStorage
+  useEffect(() => {
+    const savedClasses = JSON.parse(localStorage.getItem('fairy_classes') || '[]');
+    setClassList(savedClasses);
+  }, []);
+
+  // Load current class data when selected
+  useEffect(() => {
+    if (currentClass) {
+      const savedClassData = JSON.parse(localStorage.getItem(`fairy_classroom_${currentClass.id}`) || '{}');
+      setStudents(savedClassData.students || []);
+      setTasks(savedClassData.tasks || []);
+    }
+  }, [currentClass]);
+
+  // Handle class creation
   const handleCreateClass = (e) => {
     e.preventDefault();
-    // Handle class creation logic here
+    const formData = new FormData(e.target);
+    const className = formData.get('className');
+    const subject = formData.get('subject');
+    
+    const newClass = {
+      id: `class-${Date.now()}`,
+      name: className,
+      subject: subject || '',
+      students: 0,
+      tasks: 0
+    };
+    
+    const updatedClasses = [...classList, newClass];
+    setClassList(updatedClasses);
+    localStorage.setItem('fairy_classes', JSON.stringify(updatedClasses));
     setShowCreateClassModal(false);
+    setCurrentClass(newClass);
   };
 
+  // Handle add student
   const handleAddStudent = (e) => {
     e.preventDefault();
-    // Handle add student logic here
+    const formData = new FormData(e.target);
+    const name = formData.get('name');
+    const details = formData.get('details');
+    
+    const newStudent = {
+      id: `student-${Date.now()}`,
+      name: name,
+      gender: selectedGender,
+      doorTheme: doorTheme,
+      photo: previewAvatar || filePreview || null,
+      total: 0,
+      history: []
+    };
+    
+    const updatedStudents = [...students, newStudent];
+    setStudents(updatedStudents);
+    
+    // Update class data in localStorage
+    const classData = {
+      __classroomName: currentClass.name,
+      students: updatedStudents,
+      tasks: tasks
+    };
+    localStorage.setItem(`fairy_classroom_${currentClass.id}`, JSON.stringify(classData));
+    
     setShowAddStudentModal(false);
+    setPreviewAvatar('');
+    setFilePreview('');
+    setFile(null);
   };
 
+  // Handle add task
   const handleAddTask = (e) => {
     e.preventDefault();
-    // Handle add task logic here
+    const formData = new FormData(e.target);
+    const label = formData.get('label');
+    const description = formData.get('description');
+    const points = parseInt(formData.get('points')) || 0;
+    const category = formData.get('category') || 'positive';
+    
+    const taskPoints = category === 'needs' ? -Math.abs(points) : Math.abs(points);
+    
+    const newTask = {
+      id: `task-${Date.now()}`,
+      label: label,
+      points: taskPoints,
+      description: description || ''
+    };
+    
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    
+    // Update class data in localStorage
+    const classData = {
+      __classroomName: currentClass.name,
+      students: students,
+      tasks: updatedTasks
+    };
+    localStorage.setItem(`fairy_classroom_${currentClass.id}`, JSON.stringify(classData));
+    
     setShowAddTaskModal(false);
   };
 
+  // Handle class selection
   const handleClassSelect = (cls) => {
     setCurrentClass(cls);
   };
+
+  // Handle student deletion
+  const handleDeleteStudent = (studentId) => {
+    const updatedStudents = students.filter(s => s.id !== studentId);
+    setStudents(updatedStudents);
+    
+    // Update class data in localStorage
+    const classData = {
+      __classroomName: currentClass.name,
+      students: updatedStudents,
+      tasks: tasks
+    };
+    localStorage.setItem(`fairy_classroom_${currentClass.id}`, JSON.stringify(classData));
+  };
+
+  // Handle task deletion
+  const handleDeleteTask = (taskId) => {
+    const updatedTasks = tasks.filter(t => t.id !== taskId);
+    setTasks(updatedTasks);
+    
+    // Update class data in localStorage
+    const classData = {
+      __classroomName: currentClass.name,
+      students: students,
+      tasks: updatedTasks
+    };
+    localStorage.setItem(`fairy_classroom_${currentClass.id}`, JSON.stringify(classData));
+  };
+
+  // Handle giving a task to a student
+  const handleGiveTask = (task) => {
+    setSelectedTaskForGive(task);
+    setShowTaskGiveModal(true);
+  };
+
+  // Handle confirming task assignment
+  const confirmTaskAssignment = () => {
+    if (!selectedStudentForTask || !selectedTaskForGive) return;
+    
+    const student = students.find(s => s.id === selectedStudentForTask);
+    if (!student) return;
+    
+    // Update student points and history
+    const updatedPoints = student.total + (selectedTaskForGive.points || 0);
+    const updatedHistory = [
+      ...student.history || [],
+      {
+        task: selectedTaskForGive.label,
+        points: selectedTaskForGive.points || 0,
+        ts: Date.now()
+      }
+    ];
+    
+    const updatedStudents = students.map(s => 
+      s.id === selectedStudentForTask 
+        ? { ...s, total: updatedPoints, history: updatedHistory }
+        : s
+    );
+    
+    setStudents(updatedStudents);
+    
+    // Update class data in localStorage
+    const classData = {
+      __classroomName: currentClass.name,
+      students: updatedStudents,
+      tasks: tasks
+    };
+    localStorage.setItem(`fairy_classroom_${currentClass.id}`, JSON.stringify(classData));
+    
+    setShowTaskGiveModal(false);
+    setSelectedStudentForTask('');
+    setSelectedTaskForGive(null);
+  };
+
+  // Handle resetting student points
+  const handleResetStudentPoints = (studentId) => {
+    const updatedStudents = students.map(s => 
+      s.id === studentId ? { ...s, total: 0, history: [] } : s
+    );
+    
+    setStudents(updatedStudents);
+    
+    // Update class data in localStorage
+    const classData = {
+      __classroomName: currentClass.name,
+      students: updatedStudents,
+      tasks: tasks
+    };
+    localStorage.setItem(`fairy_classroom_${currentClass.id}`, JSON.stringify(classData));
+  };
+
+  // Handle class deletion
+  const handleDeleteClass = (classId) => {
+    if (window.confirm('Are you sure you want to delete this class? This cannot be undone.')) {
+      const updatedClasses = classList.filter(c => c.id !== classId);
+      setClassList(updatedClasses);
+      localStorage.setItem('fairy_classes', JSON.stringify(updatedClasses));
+      
+      if (currentClass?.id === classId) {
+        setCurrentClass(null);
+      }
+      
+      // Remove class data from localStorage
+      localStorage.removeItem(`fairy_classroom_${classId}`);
+    }
+  };
+
+  // Handle avatar preview
+  const handleAvatarChange = (type, value) => {
+    setAvatarType(type);
+    if (type === 'emoji') {
+      setAvatarEmoji(value);
+      setPreviewAvatar(createEmojiAvatar(value, avatarColor));
+    } else if (type === 'color') {
+      setAvatarColor(value);
+      setPreviewAvatar(createEmojiAvatar(avatarEmoji, value));
+    }
+  };
+
+  // Create emoji avatar
+  const createEmojiAvatar = (emoji, bgColor) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw background
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw emoji
+    ctx.font = '100px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#333';
+    ctx.fillText(emoji, canvas.width / 2, canvas.height / 2);
+    
+    return canvas.toDataURL();
+  };
+
+  // Handle file upload for avatar
+  const handleFileUpload = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFilePreview(event.target.result);
+        setPreviewAvatar(event.target.result);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  // Filter students based on search term
+  const filteredStudents = students.filter(student => 
+    student.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="teachers-page">
@@ -82,7 +352,7 @@ const Teachers = () => {
               {currentClass ? currentClass.name : 'Select a class'}
             </div>
             <div className="counts" id="classCounts" style={{ color: 'var(--muted)', fontSize: '13px', marginRight: '18px' }}>
-              {currentClass ? `${currentClass.students?.length || 0} students · ${currentClass.tasks?.length || 0} tasks` : 'No class selected'}
+              {currentClass ? `${students.length} students · ${tasks.length} tasks` : 'No class selected'}
             </div>
           </div>
         </div>
@@ -270,21 +540,22 @@ const Teachers = () => {
             </div>
             <div className="side-actions-buttons" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button id="btnAddStudent" className="action-btn" 
-                onClick={() => setShowAddStudentModal(true)}>
+                onClick={() => setShowAddStudentModal(true)} disabled={!currentClass}>
                 ➕ <span className="btn-label">Add / Edit students</span>
               </button>
               <button id="btnAddTasks" className="action-btn"
                 style={{ background: 'linear-gradient(135deg,#7dd7ff,#5bbfff)', color: '#00334a' }}
-                onClick={() => setShowAddTaskModal(true)}>
+                onClick={() => setShowAddTaskModal(true)} disabled={!currentClass}>
                 🛠 <span className="btn-label">Add Tasks</span>
               </button>
               <button id="btnReports" className="action-btn" 
                 style={{ background: 'linear-gradient(135deg,#88dd88,#66cc66)' }}
-                onClick={() => navigate('/reports')}>
+                onClick={() => navigate('/reports')} disabled={!currentClass}>
                 📊 <span className="btn-label">Generate Reports</span>
               </button>
               <button id="btnRemoveClass" className="small-btn"
-                style={{ background: 'linear-gradient(135deg,#ff6b6b,#ff4b4b)', color: '#fff' }}>
+                style={{ background: 'linear-gradient(135deg,#ff6b6b,#ff4b4b)', color: '#fff' }}
+                onClick={() => currentClass && handleDeleteClass(currentClass.id)} disabled={!currentClass}>
                 🗑 <span className="btn-label">Remove Class</span>
               </button>
               <div id="optionsWrap" style={{ position: 'relative' }}>
@@ -309,7 +580,8 @@ const Teachers = () => {
                     Archive
                   </button>
                   <button id="deleteClassBtn" className="small-btn"
-                    style={{ width: '100%', background: 'linear-gradient(135deg,#ff6b6b,#ff4b4b)' }}>
+                    style={{ width: '100%', background: 'linear-gradient(135deg,#ff6b6b,#ff4b4b)' }}
+                    onClick={() => currentClass && handleDeleteClass(currentClass.id)}>
                     Delete
                   </button>
                 </div>
@@ -342,11 +614,226 @@ const Teachers = () => {
         <main className="main">
           {currentClass ? (
             <section id="classArea" style={{ display: 'block' }}>
-              <div id="childList" className="child-list" style={{ marginTop: '18px', display: 'block' }}>
-                <h2>{currentClass.name}</h2>
-                <p>Students: {currentClass.students?.length || 0}</p>
-                <p>Tasks: {currentClass.tasks?.length || 0}</p>
+              <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                <button 
+                  className={activeTab === 'students' ? 'tab-active' : 'tab-inactive'}
+                  onClick={() => setActiveTab('students')}
+                  style={{
+                    padding: '10px 20px',
+                    border: 'none',
+                    backgroundColor: activeTab === 'students' ? '#7b4cff' : '#e2e8f0',
+                    color: activeTab === 'students' ? 'white' : '#4a5568',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Students ({students.length})
+                </button>
+                <button 
+                  className={activeTab === 'tasks' ? 'tab-active' : 'tab-inactive'}
+                  onClick={() => setActiveTab('tasks')}
+                  style={{
+                    padding: '10px 20px',
+                    border: 'none',
+                    backgroundColor: activeTab === 'tasks' ? '#7b4cff' : '#e2e8f0',
+                    color: activeTab === 'tasks' ? 'white' : '#4a5568',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Tasks ({tasks.length})
+                </button>
               </div>
+
+              {activeTab === 'students' ? (
+                <div id="childList" className="child-list" style={{ marginTop: '18px', display: 'block' }}>
+                  <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2>Students in {currentClass.name}</h2>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <input
+                        type="text"
+                        placeholder="Search students..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                          padding: '8px 12px',
+                          border: '1px solid #cbd5e0',
+                          borderRadius: '8px',
+                          fontSize: '14px'
+                        }}
+                      />
+                      <button 
+                        onClick={() => setShowStudentManager(true)}
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#7b4cff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Manage Students
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+                    {filteredStudents.map((student) => (
+                      <div 
+                        key={student.id}
+                        style={{
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        {student.photo ? (
+                          <img 
+                            src={student.photo} 
+                            alt={student.name} 
+                            style={{ 
+                              width: '80px', 
+                              height: '80px', 
+                              borderRadius: '50%', 
+                              objectFit: 'cover',
+                              marginBottom: '12px'
+                            }} 
+                          />
+                        ) : (
+                          <div 
+                            style={{ 
+                              width: '80px', 
+                              height: '80px', 
+                              borderRadius: '50%', 
+                              backgroundColor: student.doorTheme || '#ffd1f0',
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              fontSize: '24px',
+                              marginBottom: '12px'
+                            }}
+                          >
+                            {student.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{student.name}</h3>
+                        <p style={{ margin: '0 0 8px 0', color: '#4a5568' }}>Points: <strong>{student.total}</strong></p>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                          <button 
+                            onClick={() => {
+                              setSelectedStudentForTask(student.id);
+                              setShowTaskGiveModal(true);
+                            }}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#48bb78',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Give Task
+                          </button>
+                          <button 
+                            onClick={() => handleResetStudentPoints(student.id)}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#ecc94b',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Reset Points
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteStudent(student.id)}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#f56565',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div id="taskList" className="task-list" style={{ marginTop: '18px', display: 'block' }}>
+                  <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2>Tasks for {currentClass.name}</h2>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                    {tasks.map((task) => (
+                      <div 
+                        key={task.id}
+                        style={{
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{task.label}</h3>
+                        <p style={{ margin: '0 0 8px 0', color: '#4a5568' }}>
+                          Points: <strong>{task.points > 0 ? `+${task.points}` : task.points}</strong>
+                        </p>
+                        {task.description && (
+                          <p style={{ margin: '0 0 12px 0', color: '#718096', fontSize: '14px' }}>
+                            {task.description}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                          <button 
+                            onClick={() => handleGiveTask(task)}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#4299e1',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Give to Student
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteTask(task.id)}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#f56565',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
           ) : (
             <section id="welcome" className="grid">
@@ -373,11 +860,28 @@ const Teachers = () => {
           <div className="modal">
             <h3>Create New Class</h3>
             <form onSubmit={handleCreateClass}>
-              <input type="text" placeholder="Class name" required />
-              <input type="text" placeholder="Subject (optional)" />
+              <div className="form-group">
+                <label htmlFor="className">Class Name</label>
+                <input 
+                  type="text" 
+                  id="className" 
+                  name="className" 
+                  placeholder="Enter class name" 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="subject">Subject (Optional)</label>
+                <input 
+                  type="text" 
+                  id="subject" 
+                  name="subject" 
+                  placeholder="Enter subject" 
+                />
+              </div>
               <div className="modal-actions">
-              <button type="button" onClick={() => setShowCreateClassModal(false)}>Cancel</button>
-              <button type="submit">Create</button>
+                <button type="button" onClick={() => setShowCreateClassModal(false)}>Cancel</button>
+                <button type="submit">Create</button>
               </div>
             </form>
           </div>
@@ -387,14 +891,113 @@ const Teachers = () => {
       {/* Add Student Modal */}
       {showAddStudentModal && (
         <div className="modal-backdrop">
-          <div className="modal">
-            <h3>Add Students</h3>
+          <div className="modal" style={{ maxWidth: '800px' }}>
+            <h3>Add New Student</h3>
             <form onSubmit={handleAddStudent}>
-              <input type="text" placeholder="Student name" required />
-              <input type="text" placeholder="Additional details (optional)" />
+              <div className="form-group">
+                <label htmlFor="name">Student Name</label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  name="name" 
+                  placeholder="Enter student name" 
+                  required 
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Avatar</label>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>Emoji</label>
+                    <select 
+                      value={avatarEmoji} 
+                      onChange={(e) => handleAvatarChange('emoji', e.target.value)}
+                      style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ccc' }}
+                    >
+                      <option value="🦄">🦄 Unicorn</option>
+                      <option value="🐶">🐶 Dog</option>
+                      <option value="🐱">🐱 Cat</option>
+                      <option value="🦁">🦁 Lion</option>
+                      <option value="🐯">🐯 Tiger</option>
+                      <option value="🦊">🦊 Fox</option>
+                      <option value="🐻">🐻 Bear</option>
+                      <option value="🐼">🐼 Panda</option>
+                      <option value="🐨">🐨 Koala</option>
+                      <option value="🐵">🐵 Monkey</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>Background Color</label>
+                    <input 
+                      type="color" 
+                      value={avatarColor} 
+                      onChange={(e) => handleAvatarChange('color', e.target.value)}
+                      style={{ width: '50px', height: '30px', border: 'none', borderRadius: '4px' }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>Or Upload Photo</label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleFileUpload}
+                      ref={fileInputRef}
+                      style={{ padding: '5px' }}
+                    />
+                  </div>
+                </div>
+                
+                {previewAvatar && (
+                  <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                    <img 
+                      src={previewAvatar} 
+                      alt="Preview" 
+                      style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover' }} 
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="form-group">
+                <label>Gender</label>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {['male', 'female', 'other'].map(gender => (
+                    <button
+                      key={gender}
+                      type="button"
+                      className={`gender-btn ${selectedGender === gender ? 'selected' : ''}`}
+                      onClick={() => setSelectedGender(gender)}
+                      style={{
+                        padding: '8px 15px',
+                        border: selectedGender === gender ? '2px solid #7b4cff' : '1px solid #ccc',
+                        backgroundColor: selectedGender === gender ? '#f0e6ff' : 'white',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        fontWeight: selectedGender === gender ? 'bold' : 'normal'
+                      }}
+                    >
+                      {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Door Theme Color</label>
+                <input 
+                  type="color" 
+                  value={doorTheme} 
+                  onChange={(e) => setDoorTheme(e.target.value)}
+                  style={{ width: '50px', height: '30px', border: 'none', borderRadius: '4px' }}
+                />
+              </div>
+              
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowAddStudentModal(false)}>Cancel</button>
-                <button type="submit">Add</button>
+                <button type="submit">Add Student</button>
               </div>
             </form>
           </div>
@@ -405,15 +1008,215 @@ const Teachers = () => {
       {showAddTaskModal && (
         <div className="modal-backdrop">
           <div className="modal">
-            <h3>Add Task</h3>
+            <h3>Add New Task</h3>
             <form onSubmit={handleAddTask}>
-              <input type="text" placeholder="Task name" required />
-              <input type="text" placeholder="Description (optional)" />
+              <div className="form-group">
+                <label htmlFor="label">Task Name</label>
+                <input 
+                  type="text" 
+                  id="label" 
+                  name="label" 
+                  placeholder="Enter task name" 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="points">Points</label>
+                <input 
+                  type="number" 
+                  id="points" 
+                  name="points" 
+                  placeholder="Enter points value" 
+                  defaultValue="1"
+                  min="0"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="category">Category</label>
+                <select 
+                  id="category" 
+                  name="category" 
+                  defaultValue="positive"
+                  style={{ padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}
+                >
+                  <option value="positive">Positive (Reward)</option>
+                  <option value="needs">Needs Work (Penalty)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Description (Optional)</label>
+                <textarea 
+                  id="description" 
+                  name="description" 
+                  placeholder="Enter task description" 
+                  rows="3"
+                  style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}
+                ></textarea>
+              </div>
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowAddTaskModal(false)}>Cancel</button>
-                <button type="submit">Add</button>
+                <button type="submit">Add Task</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Task Give Modal */}
+      {showTaskGiveModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>Give Task to Student</h3>
+            <div className="form-group">
+              <label>Select Student</label>
+              <select 
+                value={selectedStudentForTask} 
+                onChange={(e) => setSelectedStudentForTask(e.target.value)}
+                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}
+              >
+                <option value="">Select a student</option>
+                {students.map(student => (
+                  <option key={student.id} value={student.id}>
+                    {student.name} ({student.total} points)
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedTaskForGive && (
+              <div className="form-group">
+                <p><strong>Task:</strong> {selectedTaskForGive.label}</p>
+                <p><strong>Points:</strong> {selectedTaskForGive.points > 0 ? `+${selectedTaskForGive.points}` : selectedTaskForGive.points}</p>
+              </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" onClick={() => {
+                setShowTaskGiveModal(false);
+                setSelectedStudentForTask('');
+                setSelectedTaskForGive(null);
+              }}>Cancel</button>
+              <button 
+                type="button" 
+                onClick={confirmTaskAssignment}
+                disabled={!selectedStudentForTask}
+              >
+                Give Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Manager Modal */}
+      {showStudentManager && (
+        <div className="modal-backdrop">
+          <div className="modal" style={{ maxWidth: '900px' }}>
+            <h3>Student Manager</h3>
+            <div className="student-manager-content">
+              <div style={{ marginBottom: '15px' }}>
+                <input
+                  type="text"
+                  placeholder="Search students..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #cbd5e0',
+                    borderRadius: '8px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+              
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {filteredStudents.map((student) => (
+                  <div 
+                    key={student.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '12px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      marginBottom: '8px'
+                    }}
+                  >
+                    {student.photo ? (
+                      <img 
+                        src={student.photo} 
+                        alt={student.name} 
+                        style={{ 
+                          width: '50px', 
+                          height: '50px', 
+                          borderRadius: '50%', 
+                          objectFit: 'cover',
+                          marginRight: '12px'
+                        }} 
+                      />
+                    ) : (
+                      <div 
+                        style={{ 
+                          width: '50px', 
+                          height: '50px', 
+                          borderRadius: '50%', 
+                          backgroundColor: student.doorTheme || '#ffd1f0',
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          fontSize: '18px',
+                          marginRight: '12px'
+                        }}
+                      >
+                        {student.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 'bold' }}>{student.name}</div>
+                      <div style={{ fontSize: '14px', color: '#666' }}>Points: {student.total}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => handleResetStudentPoints(student.id)}
+                        style={{
+                          padding: '6px 10px',
+                          backgroundColor: '#ecc94b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Reset
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteStudent(student.id)}
+                        style={{
+                          padding: '6px 10px',
+                          backgroundColor: '#f56565',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="modal-actions" style={{ marginTop: '20px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowStudentManager(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
