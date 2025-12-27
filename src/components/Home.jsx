@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
 const Home = () => {
+  const navigate = useNavigate();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,8 +32,8 @@ const Home = () => {
     e.preventDefault();
     // Handle login logic here
     console.log('Login data:', loginData);
-    // For now, redirect to teachers page
-    window.location.href = '/teachers';
+    // For now, redirect to teachers page using React Router
+    navigate('/teachers');
   };
 
   const toggleMobileMenu = () => {
