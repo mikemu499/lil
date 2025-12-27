@@ -43,7 +43,7 @@ const Teachers = () => {
     setUser({
       name: 'Teacher Name',
       email: 'teacher@example.com',
-      avatar: 'https://via.placeholder.com/150'
+      avatar: 'https://ui-avatars.com/api/?name=Teacher+Name&background=random&color=fff'
     });
   }, []);
 
@@ -368,7 +368,7 @@ const Teachers = () => {
           <button id="accountBtn" className="small-btn" aria-haspopup="true" aria-expanded={showAccountMenu}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px', borderRadius: '999px' }}
             onClick={() => setShowAccountMenu(!showAccountMenu)}>
-            <img id="accountAvatar" src={user?.avatar || 'https://via.placeholder.com/150'} alt="Account"
+            <img id="accountAvatar" src={user?.avatar || 'https://ui-avatars.com/api/?name=Teacher+Name&background=random&color=fff'} alt="Account"
               style={{ width: '28px', height: '28px', borderRadius: '999px', objectFit: 'cover', background: '#fff' }} />
             <span style={{ fontWeight: '800' }}>▾</span>
           </button>
@@ -395,7 +395,7 @@ const Teachers = () => {
                 borderBottom: '1.5px solid rgba(200,200,255,0.13)', 
                 marginBottom: '16px' 
               }}>
-                <img id="accountAvatarDropdown" src={user?.avatar || 'https://via.placeholder.com/150'} alt="Account" 
+                <img id="accountAvatarDropdown" src={user?.avatar || 'https://ui-avatars.com/api/?name=Teacher+Name&background=random&color=fff'} alt="Account" 
                   style={{ 
                     width: '54px', 
                     height: '54px', 
