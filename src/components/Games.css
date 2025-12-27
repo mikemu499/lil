@@ -1,8 +1,9 @@
 .games-page {
   width: 100%;
   min-height: 100vh;
-  background: #f6f8fb;
-  font-family: 'Poppins', system-ui, sans-serif;
+  background: var(--bg1);
+  font-family: var(--font);
+  color: var(--text-primary);
 }
 
 .header-menu {
@@ -11,36 +12,40 @@
   align-items: center;
   gap: 14px;
   background: rgba(255,255,255,0.85);
-  box-shadow: 0 2px 16px #7b4cff11;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 16px rgba(15,20,40,0.08);
   padding: 0 32px;
   height: 64px;
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 1px solid var(--border);
 }
 
 .header-menu .menu-btn {
-  background: none;
+  background: transparent;
   border: none;
   font-size: 1.15em;
   font-weight: 700;
-  color: #7b4cff;
+  color: var(--text-secondary);
   padding: 10px 22px;
   border-radius: 16px 16px 0 0;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s;
+  transition: all 0.18s ease;
   outline: none;
 }
 
 .header-menu .menu-btn.selected {
-  background: linear-gradient(90deg, #e0e7ff 60%, #f6f8fb 100%);
-  color: #3b1f7a;
-  box-shadow: 0 2px 8px #7b4cff11;
+  background: var(--card);
+  color: var(--primary);
+  box-shadow: var(--shadow-md);
+  border-bottom: 2px solid var(--primary);
 }
 
 .header-menu .menu-btn:hover {
-  background: #ede9fe;
-  color: #3b1f7a;
+  background: rgba(107, 70, 255, 0.1);
+  color: var(--primary);
 }
 
 .game-container {
@@ -49,13 +54,14 @@
 }
 
 .game-container h2 {
-  color: #3b1f7a;
+  color: var(--text-primary);
   font-size: 2rem;
   margin-bottom: 16px;
+  font-weight: 700;
 }
 
 .game-container p {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin: 8px 0;
 }
@@ -69,19 +75,21 @@
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  background: linear-gradient(90deg,#7b4cff 0%,#a084ff 100%);
-  color: #fff;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  color: white;
   font-weight: 800;
   border-radius: 14px;
   text-decoration: none;
-  box-shadow: 0 8px 30px rgba(123,76,255,0.18);
-  transition: transform .12s ease, box-shadow .12s ease;
+  box-shadow: var(--shadow-md);
+  transition: all 0.12s ease;
   backdrop-filter: blur(6px);
+  border: none;
+  cursor: pointer;
 }
 
 .back-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(123,76,255,0.22);
+  box-shadow: var(--shadow-lg);
 }
 
 .back-btn:active {
