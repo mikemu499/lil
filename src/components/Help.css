@@ -3,12 +3,15 @@
   max-width: 1000px;
   margin: 0 auto;
   background: var(--bg1);
+  color: var(--text-primary);
+  min-height: 100vh;
 }
 
 .help-page h1 {
-  color: var(--accent);
+  color: var(--primary);
   font-size: 2.5rem;
   margin-bottom: 24px;
+  font-weight: 700;
 }
 
 .help-content {
@@ -19,17 +22,18 @@
 
 .help-section {
   background: var(--card);
-  border-radius: 18px;
+  border-radius: var(--radius);
   padding: 24px;
   box-shadow: var(--shadow-md);
-  border: 1px solid rgba(120,110,255,0.06);
+  border: 1px solid var(--border);
 }
 
 .help-section h2 {
-  color: var(--accent);
+  color: var(--primary);
   margin: 0 0 20px 0;
   font-size: 1.5rem;
-  border-bottom: 2px solid rgba(123,76,255,0.1);
+  font-weight: 600;
+  border-bottom: 2px solid rgba(107, 70, 255, 0.1);
   padding-bottom: 12px;
 }
 
@@ -38,33 +42,35 @@
 }
 
 .help-item h3 {
-  color: #374151;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
   font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .help-item p {
-  color: var(--muted);
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.6;
 }
 
 .contact-section {
   background: var(--card);
-  border-radius: 18px;
+  border-radius: var(--radius);
   padding: 24px;
   box-shadow: var(--shadow-md);
-  border: 1px solid rgba(120,110,255,0.06);
+  border: 1px solid var(--border);
 }
 
 .contact-section h2 {
-  color: var(--accent);
+  color: var(--primary);
   margin: 0 0 16px 0;
   font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .contact-section p {
-  color: var(--muted);
+  color: var(--text-secondary);
   margin: 0 0 20px 0;
   line-height: 1.6;
 }
@@ -77,29 +83,30 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-primary);
 }
 
 .contact-form .form-group input,
 .contact-form .form-group textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 16px;
-  transition: border-color 0.2s;
-  background: #f9fafb;
+  transition: all 0.2s ease;
+  background: var(--bg1);
+  color: var(--text-primary);
 }
 
 .contact-form .form-group input:focus,
 .contact-form .form-group textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(123, 70, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(107, 70, 255, 0.1);
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, var(--accent), #b86bff);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: white;
   border: none;
   padding: 12px 24px;
@@ -107,7 +114,7 @@
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 
 .submit-btn:hover {
