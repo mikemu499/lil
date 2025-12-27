@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Teachers.css';
 
 const Teachers = () => {
+  const navigate = useNavigate();
   const [currentClass, setCurrentClass] = useState(null);
   const [classList, setClassList] = useState([]);
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
@@ -85,7 +87,11 @@ const Teachers = () => {
           </div>
         </div>
         <a href="/reports" id="btnReportsTopline" className="action-btn"
-          style={{ background: 'linear-gradient(135deg,#88dd88,#66cc66)', transition: 'background 0.18s' }}>
+          style={{ background: 'linear-gradient(135deg,#88dd88,#66cc66)', transition: 'background 0.18s' }}
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/reports');
+          }}>
           📊 <span className="btn-label">Reports</span>
         </a>
         <div id="accountMenu" style={{ position: 'relative', marginLeft: '18px' }}>
@@ -210,7 +216,7 @@ const Teachers = () => {
                 }}
                 onClick={() => {
                   // Handle sign out logic
-                  window.location.href = '/';
+                  navigate('/');
                 }}>
                   <span>🚪</span> Log Out
                 </button>
@@ -274,7 +280,7 @@ const Teachers = () => {
               </button>
               <button id="btnReports" className="action-btn" 
                 style={{ background: 'linear-gradient(135deg,#88dd88,#66cc66)' }}
-                onClick={() => window.location.href = '/reports'}>
+                onClick={() => navigate('/reports')}>
                 📊 <span className="btn-label">Generate Reports</span>
               </button>
               <button id="btnRemoveClass" className="small-btn"
@@ -322,7 +328,7 @@ const Teachers = () => {
                   fontWeight: '800', 
                   boxShadow: '0 2px 12px rgba(255,176,71,0.10)' 
                 }}
-                onClick={() => window.location.href = '/games'}>
+                onClick={() => navigate('/games')}>
                 🎮 <span className="btn-label">Play / Create Games</span>
               </button>
             </div>

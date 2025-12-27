@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Games.css';
 
 const Games = () => {
+  const navigate = useNavigate();
   const [activeGame, setActiveGame] = useState('wheel');
 
   const games = {
@@ -13,10 +15,14 @@ const Games = () => {
 
   return (
     <div className="games-page">
-      <a href="/teachers" className="back-btn" title="Back to Teachers">
+      <button 
+        className="back-btn" 
+        title="Back to Teachers"
+        onClick={() => navigate('/teachers')}
+      >
         <span className="back-icon">←</span>
         <span className="back-text">Back</span>
-      </a>
+      </button>
 
       <div className="header-menu">
         {Object.entries(games).map(([key, label]) => (
